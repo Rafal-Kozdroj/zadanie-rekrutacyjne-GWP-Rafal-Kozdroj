@@ -61,7 +61,7 @@ class handler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(value)
     
-    def do_GET(self):
+    def do_DELETE(self):
         print("path: " + self.path)
         if not self.path.startswith("/api/objects/"):
             self.send_error(404)
