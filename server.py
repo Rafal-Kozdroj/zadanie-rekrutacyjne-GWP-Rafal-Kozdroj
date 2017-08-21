@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import json
 from flask import Flask
-from flask import Response
 from flask import request
 
 app = Flask(__name__)
