@@ -6,7 +6,7 @@ from flask import make_response
 
 app = Flask(__name__)
 
-VALUE_MAX_SIZE = 1024 * 1024 * 1024
+VALUE_MAX_SIZE = 1024 * 1024
 KEY_MAX_LEN = 100
 
 FILENAME = "values.txt"
