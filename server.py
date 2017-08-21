@@ -9,6 +9,7 @@ app = Flask(__name__)
 values = {}
 
 VALUE_MAX_SIZE = 1024 * 1024 * 1024
+KEY_MAX_LEN = 100
 
 def put_value(key, value, values):
     created = False
@@ -38,6 +39,8 @@ def send_keys():
 def objects(key):
     if not key.isalnum():
         return "", 400
+    if len(key) > KEY_MAX_LEN:
+        return "", 400
     if request.method == "PUT":
         value = request.get_data()
         if len(value) > VALUE_MAX_SIZE:
@@ -53,4 +56,5 @@ def objects(key):
     elif request.method == "DELETE":
         if remove_value(key, values):
             return "", 200
-    return "", 404
+        return "", 404
+    return "", 400
