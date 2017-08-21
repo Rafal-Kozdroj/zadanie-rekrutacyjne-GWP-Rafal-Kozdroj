@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
+import json
 from flask import Flask
 from flask import Response
 from flask import request
-import json
-import re
+
 app = Flask(__name__)
 
 values = {}
 
 VALUE_MAX_SIZE = 1024 * 1024 * 1024
-KEY_PATTERN = re.compile("[a-zA-z0-9]+")
 
 def put_value(key, value, values):
     created = False
@@ -37,7 +36,7 @@ def send_keys():
 
 @app.route("/api/objects/<key>", methods=["GET", "PUT", "DELETE"])
 def objects(key):
-    if not KEY_PATTERN.match(key):
+    if not key.isalnum():
         return "", 400
     if request.method == "PUT":
         value = request.get_data()
