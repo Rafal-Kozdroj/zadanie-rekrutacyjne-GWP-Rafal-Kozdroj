@@ -2,6 +2,7 @@
 from flask import Flask
 from flask import Response
 from flask import request
+import json
 import re
 app = Flask(__name__)
 
@@ -28,6 +29,11 @@ def remove_value(key, values):
         del values[key]
         removed = True
     return removed
+
+@app.route("/api/objects", methods=["GET"])
+def send_keys():
+    keys = list(values.keys())
+    return json.dumps(keys)
 
 @app.route("/api/objects/<key>", methods=["GET", "PUT", "DELETE"])
 def objects(key):
