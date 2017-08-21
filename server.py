@@ -5,16 +5,17 @@ from flask import request
 
 app = Flask(__name__)
 
-values = {}
-
 VALUE_MAX_SIZE = 1024 * 1024 * 1024
 KEY_MAX_LEN = 100
+
+FILENAME = "values.txt"
 
 def put_value(key, value, values):
     created = False
     if key not in values:
         created = True
-    values[key] = value
+    values[key] = value.decode()
+    save_to_file(values, FILENAME)
     return created
 
 def get_value(key, values):
@@ -26,8 +27,22 @@ def remove_value(key, values):
     removed = False
     if key in values:
         del values[key]
+        save_to_file(values, FILENAME)
         removed = True
     return removed
+
+def save_to_file(values, filename):
+    file = open(filename, "w")
+    file.write(json.dumps(values))
+    file.close()
+
+def load_file(filename):
+    file = open(filename, "r")
+    json_data = json.load(file)
+    file.close()
+    return json_data
+
+values = load_file(FILENAME)
 
 @app.route("/api/objects", methods=["GET"])
 def send_keys():
