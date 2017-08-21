@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import http.server
 import re
-import json
 
 PORT = 8080
 SERVER_ADDRESS = ("127.0.0.1", PORT)
@@ -23,6 +22,7 @@ class handler(http.server.BaseHTTPRequestHandler):
         if not key_pattern.match(key):
             self.send_error(400)
             self.end_headers()
+            return
         value = self.rfile.read()
         print("value: " + str(value))
         response = 200
@@ -40,8 +40,44 @@ class handler(http.server.BaseHTTPRequestHandler):
             self.send_response(200)
             self.end_headers()
             self.wfile.write(str(keys).encode())
-            self.wfile.write("\n".encode())
             return
+        print("path: " + self.path)
+        if not self.path.startswith("/api/objects/"):
+            self.send_error(404)
+            self.end_headers()
+            return
+        key = self.path[13:]
+        print("key: " + key)
+        if not key_pattern.match(key):
+            self.send_error(400)
+            self.end_headers()
+            return
+        if key not in values:
+            self.send_error(404)
+            self.end_headers()
+            return
+        value = values[key]
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(value)
+    
+    def do_GET(self):
+        print("path: " + self.path)
+        if not self.path.startswith("/api/objects/"):
+            self.send_error(404)
+            self.end_headers()
+            return
+        key = self.path[13:]
+        print("key: " + key)
+        if not key_pattern.match(key):
+            self.send_error(400)
+            self.end_headers()
+            return
+        if key not in values:
+            self.send_error(404)
+            self.end_headers()
+            return
+        del values[key]
         self.send_response(200)
         self.end_headers()
 
