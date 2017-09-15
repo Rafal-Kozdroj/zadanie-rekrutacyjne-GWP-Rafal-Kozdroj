@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
 import json
-import unittest
 from flask import Flask
 from flask import request
 from flask import make_response
@@ -82,13 +80,3 @@ def objects(key):
         if remove_value(key, values):
             return "", 200
         return "", 400
-
-class test_storage(unittest.TestCase):
-
-    def test_put_key(self):
-        values = {}
-        key = "key"
-        value = ("value", "text/plain")
-        put_value(key, value, values)
-        response = get_value(key, values)
-        self.assertEqual(response, value)
