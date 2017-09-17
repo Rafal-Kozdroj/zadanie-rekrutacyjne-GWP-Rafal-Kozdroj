@@ -10,12 +10,11 @@ class ServerTestCase(unittest.TestCase):
         self.app = server.app.test_client()
 
     def test_put_key(self):
-        values = {}
         key = "key"
-        value = ("value", "text/plain")
-        server.put_value(key, value, values)
-        response = server.get_value(key, values)
-        self.assertEqual(response, value)
+        value = b"value"
+        self.app.put("api/objects/{}".format(key), data=value)
+        response = self.app.get("api/objects/{}".format(key))
+        self.assertEqual(value, response.data)
 
 if __name__ == "__main__":
     unittest.main()
