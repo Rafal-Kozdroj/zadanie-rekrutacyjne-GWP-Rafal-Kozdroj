@@ -80,4 +80,4 @@ def objects(key):
     elif request.method == "DELETE":
         if remove_value(key, values):
             return "", 200
-        return "", 400
+        return "", 404
