@@ -62,7 +62,20 @@ def send_keys():
     response.headers["Content-Type"] = "application/json"
     return response
 
-@app.route("/api/objects/<key>", methods=["GET", "PUT", "DELETE"])
+@app.route("/api/objects/<key>", methods=["GET"])
+def handle_get(key):
+    print(request.method)
+    return_code = validate_key(key)
+    if return_code is not None:
+        return "", return_code
+    value = get_value(key, values)
+    if value is None:
+        return "", 404
+    response = make_response(value[0])
+    response.headers["Content-Type"] = value[1]
+    return response
+
+@app.route("/api/objects/<key>", methods=["PUT", "DELETE"])
 def objects(key):
     print(request.method)
     return_code = validate_key(key)
@@ -79,13 +92,6 @@ def objects(key):
         if put_value(key, value, values):
             return "", 201
         return "", 200
-    elif request.method == "GET":
-        value = get_value(key, values)
-        if value is None:
-            return "", 404
-        response = make_response(value[0])
-        response.headers["Content-Type"] = value[1]
-        return response
     elif request.method == "DELETE":
         if remove_value(key, values):
             return "", 200
