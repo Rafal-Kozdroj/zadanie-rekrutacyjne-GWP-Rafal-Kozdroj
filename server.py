@@ -75,24 +75,29 @@ def handle_get(key):
     response.headers["Content-Type"] = value[1]
     return response
 
-@app.route("/api/objects/<key>", methods=["PUT", "DELETE"])
-def objects(key):
+@app.route("/api/objects/<key>", methods=["PUT"])
+def handle_put(key):
     print(request.method)
     return_code = validate_key(key)
     if return_code is not None:
         return "", return_code
-    if request.method == "PUT":
-        data = request.get_data()
-        return_code = validate_data(data)
-        if return_code is not None:
-            return "", return_code
-        if "Content-Type" not in request.headers:
-            return "", 400
-        value = (data.decode(), request.headers["Content-Type"])
-        if put_value(key, value, values):
-            return "", 201
+    data = request.get_data()
+    return_code = validate_data(data)
+    if return_code is not None:
+        return "", return_code
+    if "Content-Type" not in request.headers:
+        return "", 400
+    value = (data.decode(), request.headers["Content-Type"])
+    if put_value(key, value, values):
+        return "", 201
+    return "", 200
+
+@app.route("/api/objects/<key>", methods=["DELETE"])
+def handle_delete(key):
+    print(request.method)
+    return_code = validate_key(key)
+    if return_code is not None:
+        return "", return_code
+    if remove_value(key, values):
         return "", 200
-    elif request.method == "DELETE":
-        if remove_value(key, values):
-            return "", 200
-        return "", 404
+    return "", 404
