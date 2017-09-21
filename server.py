@@ -44,6 +44,16 @@ def load_file(filename):
 
 values = load_file(FILENAME)
 
+def validate_key(key):
+    if not key.isalnum():
+        return 400
+    if len(key) > KEY_MAX_LEN:
+        return 400
+
+def validate_data(data):
+    if len(data) > VALUE_MAX_SIZE:
+            return 413
+
 @app.route("/api/objects", methods=["GET"])
 def send_keys():
     keys = list(values.keys())
@@ -55,14 +65,14 @@ def send_keys():
 @app.route("/api/objects/<key>", methods=["GET", "PUT", "DELETE"])
 def objects(key):
     print(request.method)
-    if not key.isalnum():
-        return "", 400
-    if len(key) > KEY_MAX_LEN:
-        return "", 400
+    return_code = validate_key(key)
+    if return_code is not None:
+        return "", return_code
     if request.method == "PUT":
         data = request.get_data()
-        if len(data) > VALUE_MAX_SIZE:
-            return "", 413
+        return_code = validate_data(data)
+        if return_code is not None:
+            return "", return_code
         if "Content-Type" not in request.headers:
             return "", 400
         value = (data.decode(), request.headers["Content-Type"])
