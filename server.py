@@ -1,14 +1,41 @@
+"""Simple key-value storage server"""
+import os
 import json
-from flask import Flask
-from flask import request
-from flask import make_response
+import sqlite3
+from flask import Flask, request, make_response, g
 
+# Create application instance
 app = Flask(__name__)
+
+# Load configuration
+app.config.from_object(__name__)
+app.config.update(dict(
+    DATABASE=os.path.join(app.root_path, 'server.db')
+))
+app.config.from_envvar('SERVER_SETTINGS', silent=True)
 
 VALUE_MAX_SIZE = 1024 * 1024
 KEY_MAX_LEN = 100
 
 FILENAME = "values.txt"
+
+def connect_db():
+    """Connect to the database"""
+    rv = sqlite3.connect(app.config["DATABASE"])
+    rv.row_factory = sqlite3.Row
+    return rv
+
+def get_db():
+    """Get the database connection"""
+    if not hasattr(g, "sqlite_db"):
+        g.sqlite_db = connect_db()
+    return g.sqlite_db
+
+@app.teardown_appcontext
+def close_db(error):
+    """Close the database connection"""
+    if hasattr(g, "sqlite_db"):
+        g.sqlite_db.close()
 
 def put_value(key, value, values):
     created = False
