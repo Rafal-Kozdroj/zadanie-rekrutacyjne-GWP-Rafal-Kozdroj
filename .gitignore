@@ -3,3 +3,7 @@ venv/
 .vscode/
 __pycache__/
 values.txt
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
