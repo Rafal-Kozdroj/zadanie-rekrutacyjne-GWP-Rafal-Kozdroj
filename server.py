@@ -75,7 +75,7 @@ def remove_value(key, db):
 def get_keys(db):
     cur = db.execute("SELECT ID FROM ENTRIES ORDER BY ID DESC")
     keys = cur.fetchall()
-    return json.dumps([key["ID"] for key in keys])
+    return json.dumps([key[0] for key in keys])
 
 def validate_key(key):
     if not key.isalnum():
