@@ -73,7 +73,7 @@ def remove_value(key, db):
     return True
 
 def get_keys(db):
-    cur = db.execute("SELECT ID FROM ENTRIES ORDER BY ID DESC")
+    cur = db.execute("SELECT ID FROM ENTRIES ORDER BY ID ASC")
     keys = cur.fetchall()
     return json.dumps([key[0] for key in keys])
 
