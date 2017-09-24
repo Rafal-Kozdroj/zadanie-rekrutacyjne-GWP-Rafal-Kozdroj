@@ -44,9 +44,9 @@ def close_db(error):
 
 def is_key_in_db(key, db):
     cur = db.cursor()
-    cur.execute("SELECT EXISTS(SELECT 1 FROM ENTRIES WHERE ID=?)", (key,))
+    cur.execute("SELECT ID FROM ENTRIES WHERE ID=?", (key,))
     exists = cur.fetchone()
-    if exists is 0:
+    if exists is None:
         return False
     return True
 
@@ -68,14 +68,14 @@ def remove_value(key, db):
     if exists is False:
         return False
     cur = db.cursor()
-    cur.execute("DELETE FROM ENTRIES WHERE ID = ?", key)
+    cur.execute("DELETE FROM ENTRIES WHERE ID = ?", (key,))
     db.commit()
     return True
 
 def get_keys(db):
     cur = db.execute("SELECT ID FROM ENTRIES ORDER BY ID DESC")
     keys = cur.fetchall()
-    return keys
+    return json.dumps(keys)
 
 def validate_key(key):
     if not key.isalnum():
