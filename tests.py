@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import os
+import tempfile
 import unittest
 from flask import Flask
 import server
@@ -6,8 +8,14 @@ import server
 class ServerTestCase(unittest.TestCase):
 
     def setUp(self):
+        self.db_fd, server.app.config['DATABASE'] = tempfile.mkstemp()
+        server.create_db()
         server.app.testing = True
         self.app = server.app.test_client()
+
+    def tearDown(self):
+        os.close(self.db_fd)
+        os.unlink(server.app.config['DATABASE'])
 
     def test_valid_key(self):
         key = "key"

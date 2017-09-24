@@ -17,8 +17,6 @@ app.config.from_envvar('SERVER_SETTINGS', silent=True)
 VALUE_MAX_SIZE = 1024 * 1024
 KEY_MAX_LEN = 100
 
-FILENAME = "values.txt"
-
 def connect_db():
     """Connect to the database"""
     rv = sqlite3.connect(app.config["DATABASE"])
@@ -31,45 +29,53 @@ def get_db():
         g.sqlite_db = connect_db()
     return g.sqlite_db
 
+def create_db():
+    with app.app_context():
+        db = get_db()
+        with app.open_resource('schema.sql', mode='r') as f:
+            db.cursor().executescript(f.read())
+        db.commit()
+
 @app.teardown_appcontext
 def close_db(error):
     """Close the database connection"""
     if hasattr(g, "sqlite_db"):
         g.sqlite_db.close()
 
-def put_value(key, value, values):
-    created = False
-    if key not in values:
-        created = True
-    values[key] = value
-    save_to_file(values, FILENAME)
-    return created
+def is_key_in_db(key, db):
+    cur = db.cursor()
+    cur.execute("SELECT EXISTS(SELECT 1 FROM ENTRIES WHERE ID=?)", (key,))
+    exists = cur.fetchone()
+    if exists is 0:
+        return False
+    return True
 
-def get_value(key, values):
-    if key in values:
-        return values[key]
-    return None
+def put_value(key, value, mime, db):
+    exists = is_key_in_db(key, db)
+    cur = db.cursor()
+    cur.execute("INSERT OR REPLACE INTO ENTRIES VALUES (?, ?, ?)",
+                (key, value, mime))
+    db.commit()
+    return not exists
 
-def remove_value(key, values):
-    removed = False
-    if key in values:
-        del values[key]
-        save_to_file(values, FILENAME)
-        removed = True
-    return removed
+def get_value(key, db):
+    cur = db.cursor()
+    cur.execute("SELECT DATA, MIME FROM ENTRIES WHERE ID=?", (key,))
+    return cur.fetchone()
 
-def save_to_file(values, filename):
-    file = open(filename, "w")
-    file.write(json.dumps(values))
-    file.close()
+def remove_value(key, db):
+    exists = is_key_in_db(key, db)
+    if exists is False:
+        return False
+    cur = db.cursor()
+    cur.execute("DELETE FROM ENTRIES WHERE ID = ?", key)
+    db.commit()
+    return True
 
-def load_file(filename):
-    file = open(filename, "r")
-    json_data = json.load(file)
-    file.close()
-    return json_data
-
-values = load_file(FILENAME)
+def get_keys(db):
+    cur = db.execute("SELECT ID FROM ENTRIES ORDER BY ID DESC")
+    keys = cur.fetchall()
+    return keys
 
 def validate_key(key):
     if not key.isalnum():
@@ -82,10 +88,11 @@ def validate_data(data):
             return 413
 
 @app.route("/api/objects", methods=["GET"])
-def send_keys():
-    keys = list(values.keys())
-    json_data = json.dumps(keys)
-    response = make_response(json_data)
+def show_keys():
+    """Return list of keys of all stored values."""
+    db = get_db()
+    keys = get_keys(db)
+    response = make_response(keys)
     response.headers["Content-Type"] = "application/json"
     return response
 
@@ -95,7 +102,7 @@ def handle_get(key):
     return_code = validate_key(key)
     if return_code is not None:
         return "", return_code
-    value = get_value(key, values)
+    value = get_value(key, get_db())
     if value is None:
         return "", 404
     response = make_response(value[0])
@@ -114,8 +121,8 @@ def handle_put(key):
         return "", return_code
     if "Content-Type" not in request.headers:
         return "", 400
-    value = (data.decode(), request.headers["Content-Type"])
-    if put_value(key, value, values):
+    mime = request.headers["Content-Type"]
+    if put_value(key, data, mime, get_db()):
         return "", 201
     return "", 200
 
@@ -125,6 +132,6 @@ def handle_delete(key):
     return_code = validate_key(key)
     if return_code is not None:
         return "", return_code
-    if remove_value(key, values):
+    if remove_value(key, get_db()):
         return "", 200
     return "", 404
